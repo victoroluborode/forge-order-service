@@ -3,7 +3,6 @@ package order
 import "time"
 
 type Status string
-type PaymentStatus string
 
 const (
 	StatusPending Status = "pending"
@@ -12,10 +11,6 @@ const (
 	StatusFailed Status = "failed"
 	StatusCancelled Status = "cancelled"
 	StatusFulfilled Status = "fulfilled"
-	PaymentStatusUnpaid PaymentStatus = "unpaid"
-	PaymentStatusAuthorized PaymentStatus = "authorized"
-	PaymentStatusPaid PaymentStatus = "paid"
-	PaymentStatusRefunded PaymentStatus = "refunded"
 )
 
 
@@ -26,8 +21,26 @@ type Order struct {
 	ReferenceID string
 	Currency string
 	Status Status
-	PaymentStatus 
 	Total int64
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+
+func CanTransition(from, to Status) bool {
+	allowedTransitions := map[Status][]Status {
+		StatusAwaitingPayment: {StatusPaid, StatusFailed, StatusCancelled, StatusAwaitingPayment},
+		StatusCancelled: {},
+		StatusFailed: {StatusAwaitingPayment, StatusCancelled},
+		StatusFulfilled: {},
+		StatusPaid: {StatusFulfilled},
+		StatusPending: {StatusAwaitingPayment, StatusCancelled},
+	}
+
+	for _, allowedStatus := range allowedTransitions[from] {
+		if allowedStatus == to {
+			return true
+		}
+	}
+	return false
 }
