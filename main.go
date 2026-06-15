@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+	"database/sql"
+	_ "github.com/jack/pgx/v5/stdlib"
 
 	"github.com/victoroluborode/forge-order-service/internal/order"
 )
@@ -45,6 +47,17 @@ func createOrderHandler (w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newOrder)
 }
+
+
+db, err := sql.Open("pgx", "postgres://victoroluborode:IAMdamilare170%23@localhost:5432/forge_orders?sslmode=disable")
+
+if err != nil {
+	log.Fatal(err)
+}
+
+defer db.Close()
+
+repo := order.NewRepository(db)
 
 func main() {
 	http.HandleFunc("/orders", createOrderHandler)
